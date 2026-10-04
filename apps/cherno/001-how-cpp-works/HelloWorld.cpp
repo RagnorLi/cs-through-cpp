@@ -2,6 +2,7 @@
 #include <iostream>
 
 /*
+在mac上g++ 就是 clang++
 clang++ -std=c++20 -E apps/cherno/HelloWorld.cpp -o HelloWorld.ii   # 第1步：预处理
 clang++ -std=c++20 -S HelloWorld.ii -o HelloWorld.s                 # 第2步：编译成汇编
 clang++ -c HelloWorld.s -o HelloWorld.o                             # 第3步：汇编成目标文件

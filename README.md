@@ -23,7 +23,7 @@ cs-through-cpp 要培养的，是一个先能独立写、独立想、独立调�
 |---:|---|---|---|
 | 000 | hello world |   `iosteam` | [ `000-hello-world`](apps/cherno/000-hello-world/)|
 | 001 | How C++ Works | `.cpp → .ii → .s → .o → executable`：预处理、编译、汇编、链接。 | [`001-how-cpp-works`](apps/cherno/001-how-cpp-works/) |
-
+| 002 | How The C++ Compiler Works |   `词法分析 - 语法分析 - 语义分析 - 生成IR - 优化代码 - 生成汇编` : 编译过程 | [ `002-how-the-cpp-compiler-works`](apps/cherno/002-how-the-cpp-compiler-works/) |
 
 # Commit Messages
 
