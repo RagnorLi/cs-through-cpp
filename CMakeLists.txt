@@ -5,10 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------------------------------------------------------------------------------------
-option(BUILD_HELLO_WORLD "Build the hello_world executable" OFF)
+option (BUILD_CHERNO "Build the Cherno course exercise" ON)
 
-
-if(BUILD_HELLO_WORLD)
-  add_executable(hello_world apps/hello_world.cpp)
+if (BUILD_CHERNO)
+  add_subdirectory(apps/cherno)
 endif()
-
