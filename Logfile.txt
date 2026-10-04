@@ -1,9 +1,0 @@
-﻿2026-09-07 22:02:16.076 DEBUG [37141662] [main@20] main() called
-2026-09-07 22:02:16.077 DEBUG [37141662] [getUserInput@9] getUserInput() Called
-2026-09-07 22:39:52.207 DEBUG [37204336] [main@20] main() called
-2026-09-07 22:39:52.207 DEBUG [37204336] [getUserInput@9] getUserInput() Called
-2026-09-07 22:42:08.056 DEBUG [37208453] [main@20] main() called
-2026-09-07 22:42:51.114 DEBUG [37208453] [getUserInput@9] getUserInput() Called
-2026-09-07 22:43:39.624 DEBUG [37210897] [main@20] main() called
-2026-09-08 09:38:47.992 DEBUG [37284350] [main@20] main() called
-2026-09-08 09:38:47.993 DEBUG [37284350] [getUserInput@9] getUserInput() Called
