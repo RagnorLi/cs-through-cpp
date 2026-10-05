@@ -9,7 +9,7 @@ cs-through-cpp 要培养的，是一个先能独立写、独立想、独立调�
 
 # Pain
 
-我是从GPT2就开始接触"AI"了，那是2019年了，如今7年过去了，期间我跟随者这股浪潮经历了数以千记的 [Aha moment] -> [f**k moment]。而今我是真的累了，我对LLM有3点看法：
+我是从GPT2就开始接触"AI"了，那是2019年了，如今7年过去了，期间我跟随者这股浪潮经历了数以千记的 `Aha moment` -> `f**k moment`。而今我是真的累了，我对LLM有3点看法：
 
 1. 深度学习炼化了LLM，将人类语料中的模式识别为浮点数，谓之“智能”，其也必将还之于“数据”，如果你不是一个丰富、有趣、专业的“数据”那你永远也无法点亮“沉睡的数据元”。
 2. 任何可被清晰定义 - 验证 - 循环的问题，最终都会被LLM取代。
@@ -21,8 +21,9 @@ cs-through-cpp 要培养的，是一个先能独立写、独立想、独立调�
 
 | # | Video | My understanding | Code |
 |---:|---|---|---|
+| 000 | hello world |   `iosteam` | [ `000-hello-world`](apps/cherno/000-hello-world/)|
 | 001 | How C++ Works | `.cpp → .ii → .s → .o → executable`：预处理、编译、汇编、链接。 | [`001-how-cpp-works`](apps/cherno/001-how-cpp-works/) |
-
+| 002 | How The C++ Compiler Works |   `词法分析 - 语法分析 - 语义分析 - 生成IR - 优化代码 - 生成汇编` : 编译过程 | [ `002-how-the-cpp-compiler-works`](apps/cherno/002-how-the-cpp-compiler-works/) |
 
 # Commit Messages
 
