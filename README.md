@@ -26,9 +26,9 @@ cs-through-cpp 要培养的，是一个先能独立写、独立想、独立调�
 | 002 | How The C++ Compiler Works |   `词法分析 - 语法分析 - 语义分析 - 生成IR - 优化代码 - 生成汇编` : 编译过程 | [ `002-how-the-cpp-compiler-works`](apps/cherno/002-how-the-cpp-compiler-works/) |
 
 ## Todos
--［ ］003 linker 链接器工作过程 链接问题
--［ ］004 变量 5 + 2 
--［ ］005 函数 压栈
+-［x ］003 linker 链接器工作过程 链接问题
+-［x ］004 变量 5 + 2 
+-［x ］005 函数 压栈
 
 
 
