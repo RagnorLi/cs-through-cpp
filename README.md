@@ -24,12 +24,14 @@ cs-through-cpp 要培养的，是一个先能独立写、独立想、独立调�
 | 000 | hello world |   `iosteam` | [ `000-hello-world`](apps/cherno/000-hello-world/)|
 | 001 | How C++ Works | `.cpp → .ii → .s → .o → executable`：预处理、编译、汇编、链接。 | [`001-how-cpp-works`](apps/cherno/001-how-cpp-works/) |
 | 002 | How The C++ Compiler Works |   `词法分析 - 语法分析 - 语义分析 - 生成IR - 优化代码 - 生成汇编` : 编译过程 | [ `002-how-the-cpp-compiler-works`](apps/cherno/002-how-the-cpp-compiler-works/) |
-| 003 | How the C++ Linker Works | ``
+| 003 | How the C++ Linker Works | `符号解析 - 合并段 - 重定位` : 链接过程 | [`003-how-the-cpp-linker-works`](apps/cherno/003-how-the-cpp-linker-works/) |
+| 004 | variable in cpp | `c++标准中有3大类基本类型：void、nullptr_t、arithmetic type）` | [`004-variable-in-cpp`](apps/cherno/004-variable-in-cpp/) | 
+
 
 ## Todos
 
 - [x] 003 linker 链接器工作过程 链接问题
-- [ ] 004 变量 5 + 2
+- [x] 004 变量 5 + 2
 - [ ] 005 函数 压栈
 - [ ] 006 头文件的本质 与 2种防止头文件包含语法
 
