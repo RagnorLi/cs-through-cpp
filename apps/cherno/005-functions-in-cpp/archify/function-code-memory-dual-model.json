@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "函数调用双联模型：左边代码，右边寄存器与栈",
+    "subtitle": "PushStack.cpp 的 main → callee → main；指令来自当前 Debug 构建的 Apple Silicon ARM64 反汇编",
+    "locale": "zh-CN",
+    "output": "apps/cherno/005-functions-in-cpp/archify/function-code-memory-dual-model.html",
+    "viewBox": [1080, 690],
+    "column_fit": "spread",
+    "animation": "none",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    },
+    "repository": {
+      "url": "https://github.com/RagnorLi/cpp.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bf6426784151523559d1868469bc3cde677ea5e0"
+    }
+  },
+  "participants": [
+    {
+      "id": "source",
+      "type": "frontend",
+      "label": "C++ 源码",
+      "sublabel": "你写下的语句",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 354,
+          "label": "main 与 callee 源码"
+        }
+      ]
+    },
+    {
+      "id": "code",
+      "type": "backend",
+      "label": "__TEXT / CPU",
+      "sublabel": "ARM64 指令与 PC",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 316,
+          "label": "callee 对应的源代码"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 350,
+          "label": "callee 调用点"
+        }
+      ]
+    },
+    {
+      "id": "registers",
+      "type": "security",
+      "label": "寄存器",
+      "sublabel": "PC · SP · x29 · x30",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 313,
+          "end_line": 314,
+          "label": "观察返回地址"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 350,
+          "label": "产生调用与返回状态"
+        }
+      ]
+    },
+    {
+      "id": "stack",
+      "type": "database",
+      "label": "当前线程栈",
+      "sublabel": "main 帧 + callee 帧",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 165,
+          "end_line": 180,
+          "label": "线程栈范围"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 311,
+          "end_line": 319,
+          "label": "两个局部变量"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 225,
+      "label": "① main 建立自己的栈帧"
+    },
+    {
+      "from": 235,
+      "to": 315,
+      "label": "② 调用发生：保存“回来以后去哪”，再跳到 callee"
+    },
+    {
+      "from": 325,
+      "to": 435,
+      "label": "③ callee 建立栈帧并观察返回目标"
+    },
+    {
+      "from": 445,
+      "to": 590,
+      "label": "④ callee 拆掉栈帧，ret 回到 main 的下一条指令"
+    }
+  ],
+  "messages": [
+    {
+      "id": "enterMain",
+      "from": "source",
+      "to": "code",
+      "y": 160,
+      "label": "main() → 开始执行对应机器指令",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mainReserve",
+      "from": "code",
+      "to": "registers",
+      "y": 190,
+      "label": "sub sp, sp, #0x70：SP 向低地址移动 112B",
+      "variant": "emphasis",
+      "note": "当前 Debug 构建为 main 预留 112 字节；优化设置改变时数字可能不同"
+    },
+    {
+      "id": "mainSave",
+      "from": "code",
+      "to": "stack",
+      "y": 220,
+      "label": "stp x29, x30, [sp, #0x60]：保存状态；main 栈帧出现"
+    },
+    {
+      "id": "sourceCall",
+      "from": "source",
+      "to": "code",
+      "y": 250,
+      "label": "callee(); → bl _callee",
+      "variant": "emphasis"
+    },
+    {
+      "id": "linkRegister",
+      "from": "code",
+      "to": "registers",
+      "y": 280,
+      "label": "x30 ← 0x100001ebc（main 中下一条指令）",
+      "variant": "emphasis",
+      "note": "这是 Mach-O 镜像地址；实际运行地址还会叠加 ASLR slide"
+    },
+    {
+      "id": "jumpCallee",
+      "from": "registers",
+      "to": "code",
+      "y": 310,
+      "label": "PC ← 0x100001cc8（callee 入口）",
+      "variant": "return"
+    },
+    {
+      "id": "calleeReserve",
+      "from": "code",
+      "to": "registers",
+      "y": 340,
+      "label": "sub sp, sp, #0x20：SP 再向低地址移动 32B",
+      "variant": "emphasis"
+    },
+    {
+      "id": "saveReturn",
+      "from": "code",
+      "to": "stack",
+      "y": 370,
+      "label": "stp x29, x30：保存返回目标；local 位于 callee 帧"
+    },
+    {
+      "id": "builtinReturn",
+      "from": "source",
+      "to": "code",
+      "y": 400,
+      "label": "__builtin_return_address(0)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "observeReturn",
+      "from": "code",
+      "to": "registers",
+      "y": 430,
+      "label": "观察 x30 / 已保存值 → 0x100001ebc"
+    },
+    {
+      "id": "restorePair",
+      "from": "code",
+      "to": "stack",
+      "y": 460,
+      "label": "ldp x29, x30, [sp, #0x10]：读回保存值"
+    },
+    {
+      "id": "restoreRegisters",
+      "from": "stack",
+      "to": "registers",
+      "y": 490,
+      "label": "恢复 x29 / x30；add sp, sp, #0x20"
+    },
+    {
+      "id": "returnInstruction",
+      "from": "code",
+      "to": "registers",
+      "y": 520,
+      "label": "ret：PC ← x30",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resumeMain",
+      "from": "registers",
+      "to": "code",
+      "y": 550,
+      "label": "跳回 0x100001ebc",
+      "variant": "return"
+    },
+    {
+      "id": "continueSource",
+      "from": "code",
+      "to": "source",
+      "y": 580,
+      "label": "main 从 callee(); 后面继续：free(heap)",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "code",
+      "from": 156,
+      "to": 584,
+      "type": "backend"
+    },
+    {
+      "participant": "registers",
+      "from": 186,
+      "to": 554,
+      "type": "security"
+    },
+    {
+      "participant": "stack",
+      "from": 216,
+      "to": 494,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "“跳”到底是什么",
+      "items": [
+        "CPU 总是执行 PC 指向的 __text 指令；调用与返回只是把 PC 改成另一个指令地址",
+        "bl 跳入 callee 时把下一条指令地址写入 x30；ret 再把 PC 设回 x30"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "“压栈”在 ARM64 上是什么",
+      "items": [
+        "这里没有一条神秘的 push：先减小 SP 划出空间，再用 stp 把 x29 / x30 写进内存",
+        "返回前用 ldp 读回寄存器并增大 SP；优化后的叶子函数甚至可能完全没有栈帧"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "代码、栈、堆各做什么",
+      "items": [
+        "__text 保存可执行指令；寄存器保存当下控制状态；栈保存本次调用需要保留的数据",
+        "heap 不属于函数调用机制：本例只有 main 主动调用 malloc 时才会使用它"
+      ]
+    }
+  ]
+}

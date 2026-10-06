@@ -1,0 +1,474 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenAI Codex /goal：真实实现总图",
+    "subtitle": "公开源码固定到同一提交；桌面 UI 的闭源边界单独标明；箭头展示状态如何落库、续跑并回到界面",
+    "locale": "zh-CN",
+    "output": ".archify/openai-goal-implementation-20261006-145511/01-goal-architecture.html",
+    "animation": "trace",
+    "visual_preset": "blueprint",
+    "quality_profile": "showcase",
+    "viewBox": [1580, 850],
+    "repository": {
+      "url": "https://github.com/openai/codex.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "822e58cc3d666166c7446c5b1ea2e52f5d09594c"
+    },
+    "views": [
+      {
+        "id": "write_path",
+        "label": "① 写入 Goal",
+        "focus": ["user", "desktop", "tui", "rpc", "rollout", "service", "store"],
+        "note": "显式用户命令先留下意图证据，再写 SQLite。"
+      },
+      {
+        "id": "continue_path",
+        "label": "② 自动续跑",
+        "focus": ["store", "runtime", "prompt", "thread"],
+        "note": "线程空闲时才尝试启动，不是后台死循环。"
+      },
+      {
+        "id": "agent_path",
+        "label": "③ Agent 权限",
+        "focus": ["thread", "goal_tools", "store"],
+        "note": "模型只能通过受限工具读取、创建或改变 Goal 状态。"
+      },
+      {
+        "id": "feedback_path",
+        "label": "④ 状态回流",
+        "focus": ["service", "runtime", "events", "desktop", "tui"],
+        "note": "RPC 与运行时变化都会通过 goal 事件更新界面。"
+      }
+    ],
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "frontend": { "label": "用户界面 / 命令入口" },
+        "backend": { "label": "公开的 Codex Rust 实现" },
+        "database": { "label": "持久化状态" },
+        "messagebus": { "label": "内部上下文 / 事件" },
+        "security": { "label": "用户意图与权限边界" },
+        "external": { "label": "用户或闭源边界" }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "你",
+      "sublabel": "设定真实目标",
+      "pos": [35, 350],
+      "size": [125, 70],
+      "icon": "person"
+    },
+    {
+      "id": "desktop",
+      "type": "external",
+      "label": "Codex Desktop",
+      "sublabel": "官方行为可证；UI 实现闭源",
+      "tag": "闭源边界",
+      "pos": [225, 190],
+      "size": [190, 82]
+    },
+    {
+      "id": "tui",
+      "type": "frontend",
+      "label": "开源 TUI /goal",
+      "sublabel": "set · view · edit · pause · resume · clear",
+      "pos": [225, 500],
+      "size": [190, 90],
+      "sources": [
+        {
+          "path": "codex-rs/tui/src/chatwidget/slash_dispatch.rs",
+          "line": 965,
+          "end_line": 1069,
+          "label": "Slash 命令解析"
+        },
+        {
+          "path": "codex-rs/tui/src/app/thread_goal_actions.rs",
+          "line": 23,
+          "end_line": 52,
+          "label": "查看 Goal"
+        }
+      ]
+    },
+    {
+      "id": "rpc",
+      "type": "backend",
+      "label": "App Server RPC",
+      "sublabel": "thread/goal/set · get · clear",
+      "tag": "JSON-RPC",
+      "pos": [500, 345],
+      "size": [185, 82],
+      "sources": [
+        {
+          "path": "codex-rs/app-server-protocol/src/protocol/common.rs",
+          "line": 614,
+          "end_line": 627,
+          "label": "RPC 名称"
+        },
+        {
+          "path": "codex-rs/app-server/src/message_processor.rs",
+          "line": 1355,
+          "end_line": 1366,
+          "label": "请求分发"
+        }
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "security",
+      "label": "Rollout 用户意图证据",
+      "sublabel": "显式用户变更先记录，再改数据库",
+      "pos": [500, 75],
+      "size": [205, 86],
+      "sources": [
+        {
+          "path": "codex-rs/app-server/src/request_processors/thread_goal_user_context.rs",
+          "line": 1,
+          "end_line": 50,
+          "label": "记录用户变更"
+        },
+        {
+          "path": "codex-rs/core/src/context/user_goal.rs",
+          "line": 1,
+          "end_line": 118,
+          "label": "来源与安全语义"
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "GoalService",
+      "sublabel": "校验 · 并发许可 · 状态变更",
+      "pos": [760, 345],
+      "size": [180, 82],
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/api.rs",
+          "line": 147,
+          "end_line": 294,
+          "label": "set_thread_goal"
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "GoalStore + SQLite",
+      "sublabel": "$CODEX_HOME/goals_1.sqlite",
+      "tag": "thread_goals",
+      "pos": [760, 630],
+      "size": [190, 88],
+      "sources": [
+        {
+          "path": "codex-rs/state/src/sqlite.rs",
+          "line": 34,
+          "end_line": 94,
+          "label": "数据库文件"
+        },
+        {
+          "path": "codex-rs/state/goals_migrations/0001_thread_goals.sql",
+          "line": 1,
+          "end_line": 18,
+          "label": "真实表结构"
+        },
+        {
+          "path": "codex-rs/state/src/runtime/goals.rs",
+          "line": 156,
+          "end_line": 269,
+          "label": "写入逻辑"
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "GoalRuntimeHandle",
+      "sublabel": "续跑 · 计费 · 阻塞/限额处理",
+      "pos": [1015, 345],
+      "size": [195, 86],
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/runtime.rs",
+          "line": 191,
+          "end_line": 255,
+          "label": "应用外部变更"
+        },
+        {
+          "path": "codex-rs/ext/goal/src/runtime.rs",
+          "line": 425,
+          "end_line": 523,
+          "label": "空闲续跑"
+        }
+      ]
+    },
+    {
+      "id": "prompt",
+      "type": "messagebus",
+      "label": "内部 Goal 上下文",
+      "sublabel": "objective + token 预算 + 完成审计规则",
+      "tag": "source=goal",
+      "pos": [1015, 75],
+      "size": [210, 88],
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/steering.rs",
+          "line": 10,
+          "end_line": 94,
+          "label": "模板渲染"
+        },
+        {
+          "path": "codex-rs/ext/goal/templates/goals/continuation.md",
+          "line": 1,
+          "end_line": 56,
+          "label": "续跑模板"
+        }
+      ]
+    },
+    {
+      "id": "thread",
+      "type": "backend",
+      "label": "CodexThread + Agent Loop",
+      "sublabel": "start_turn_if_idle(trigger=goal)",
+      "pos": [1300, 345],
+      "size": [215, 86],
+      "sources": [
+        {
+          "path": "codex-rs/core/src/session/turn_input.rs",
+          "line": 427,
+          "end_line": 579,
+          "label": "空闲启动闸门"
+        }
+      ]
+    },
+    {
+      "id": "goal_tools",
+      "type": "backend",
+      "label": "Goal Tools",
+      "sublabel": "get_goal · create_goal · update_goal",
+      "tag": "受限权限",
+      "pos": [1275, 630],
+      "size": [220, 88],
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/spec.rs",
+          "line": 9,
+          "end_line": 94,
+          "label": "工具契约"
+        },
+        {
+          "path": "codex-rs/ext/goal/src/tool.rs",
+          "line": 183,
+          "end_line": 314,
+          "label": "工具执行"
+        }
+      ]
+    },
+    {
+      "id": "events",
+      "type": "messagebus",
+      "label": "Goal 事件",
+      "sublabel": "thread/goal/updated · cleared",
+      "pos": [500, 630],
+      "size": [190, 88],
+      "sources": [
+        {
+          "path": "codex-rs/app-server/src/request_processors/thread_goal_processor.rs",
+          "line": 472,
+          "end_line": 521,
+          "label": "有序通知"
+        },
+        {
+          "path": "codex-rs/app-server-protocol/src/protocol/v2/thread.rs",
+          "line": 2044,
+          "end_line": 2058,
+          "label": "通知结构"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "桌面客户端：行为有官方文档，UI 函数实现未公开",
+      "wraps": ["desktop"],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "持久化事实源",
+      "wraps": ["store"],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "user_desktop",
+      "from": "user",
+      "to": "desktop",
+      "label": "/goal <objective>",
+      "variant": "emphasis"
+    },
+    {
+      "id": "user_tui",
+      "from": "user",
+      "to": "tui",
+      "label": "/goal …",
+      "variant": "emphasis"
+    },
+    {
+      "id": "desktop_rpc",
+      "from": "desktop",
+      "to": "rpc",
+      "label": "公开行为：Goal API",
+      "variant": "dashed"
+    },
+    {
+      "id": "tui_rpc",
+      "from": "tui",
+      "to": "rpc",
+      "label": "thread/goal/set|get|clear"
+    },
+    {
+      "id": "rpc_rollout",
+      "from": "rpc",
+      "to": "rollout",
+      "label": "origin=user 时先记录",
+      "variant": "security"
+    },
+    {
+      "id": "rpc_service",
+      "from": "rpc",
+      "to": "service",
+      "label": "GoalSetRequest",
+      "variant": "emphasis"
+    },
+    {
+      "id": "service_store",
+      "from": "service",
+      "to": "store",
+      "label": "校验后写 row"
+    },
+    {
+      "id": "service_runtime",
+      "from": "service",
+      "to": "runtime",
+      "label": "GoalSetOutcome → 运行时效果",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runtime_store",
+      "from": "runtime",
+      "to": "store",
+      "label": "读 active / 记 tokens+time",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "runtime_prompt",
+      "from": "runtime",
+      "to": "prompt",
+      "label": "渲染 continuation.md"
+    },
+    {
+      "id": "prompt_thread",
+      "from": "prompt",
+      "to": "thread",
+      "label": "InternalModelContext",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runtime_thread",
+      "from": "runtime",
+      "to": "thread",
+      "label": "双向：idle 启动 / lifecycle hook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "thread_tools",
+      "from": "thread",
+      "to": "goal_tools",
+      "label": "模型按需调用"
+    },
+    {
+      "id": "tools_store",
+      "from": "goal_tools",
+      "to": "store",
+      "label": "读取或受约束地改状态",
+      "variant": "security"
+    },
+    {
+      "id": "rpc_events",
+      "from": "rpc",
+      "to": "events",
+      "label": "set/clear 后发通知"
+    },
+    {
+      "id": "runtime_events",
+      "from": "runtime",
+      "to": "events",
+      "label": "自动状态变化",
+      "variant": "dashed"
+    },
+    {
+      "id": "events_desktop",
+      "from": "events",
+      "to": "desktop",
+      "label": "界面刷新",
+      "variant": "return",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "route": "orthogonal-v"
+    },
+    {
+      "id": "events_tui",
+      "from": "events",
+      "to": "tui",
+      "label": "状态刷新",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "一句话本质",
+      "items": [
+        "/goal 不是一段神秘 Prompt，而是线程级持久状态 + 事件驱动续跑",
+        "目标全文存在 SQLite；每次自动回合再把它渲染成内部上下文送入 Agent Loop",
+        "线程不空闲、Plan 模式、已有用户触发输入时，自动回合会被拒绝"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "真实持久字段",
+      "items": [
+        "thread_id · goal_id · objective · status",
+        "token_budget · tokens_used · time_used_seconds",
+        "created_at_ms · updated_at_ms；clear 是删行，不是第七种 status"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "事实分层",
+      "items": [
+        "公开源码：本图源码徽标全部固定到 commit 822e58c…",
+        "官方文档：证明 Desktop 暴露 /goal 及同一线程级语义",
+        "闭源边界：不声称知道 Desktop 输入框内部的具体函数名"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "本机对照（2026-10-06）",
+      "items": [
+        "运行版本：codex-cli 0.158.0-alpha.2.1",
+        "只读检查确认 ~/.codex/goals_1.sqlite 内存在本线程的 active Goal row",
+        "你看到的 <codex_internal_context source=\"goal\"> 与 continuation.md 模板逐项对应"
+      ]
+    }
+  ]
+}

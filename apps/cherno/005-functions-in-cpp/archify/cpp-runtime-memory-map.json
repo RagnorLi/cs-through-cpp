@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "C++ 运行时内存：源代码对象 → 进程虚拟地址空间",
+    "subtitle": "以 PushStack.cpp 在 macOS / Apple Silicon 上的实际分类为例；位置与大小不按比例",
+    "locale": "zh-CN",
+    "output": "apps/cherno/005-functions-in-cpp/archify/cpp-runtime-memory-map.html",
+    "animation": "none",
+    "visual_preset": "blueprint",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    },
+    "repository": {
+      "url": "https://github.com/RagnorLi/cpp.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bf6426784151523559d1868469bc3cde677ea5e0"
+    }
+  },
+  "components": [
+    {
+      "id": "sourceFunctions",
+      "type": "backend",
+      "label": "main() / callee()",
+      "sublabel": "C++ 函数定义",
+      "pos": [60, 100],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 354,
+          "label": "函数定义与调用"
+        }
+      ]
+    },
+    {
+      "id": "vmText",
+      "type": "security",
+      "label": "__TEXT / __text",
+      "sublabel": "机器指令 · r-x",
+      "tag": "可读 + 可执行",
+      "pos": [720, 100],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 217,
+          "end_line": 223,
+          "label": "__text 分类规则"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 334,
+          "end_line": 335,
+          "label": "取得函数入口地址"
+        }
+      ]
+    },
+    {
+      "id": "sourceLiteral",
+      "type": "external",
+      "label": "字符串字面量 \"hi\"",
+      "sublabel": "g_str 指向的字符",
+      "pos": [60, 220],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 36,
+          "label": "字符串字面量"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 336,
+          "end_line": 337,
+          "label": "探测字面量地址"
+        }
+      ]
+    },
+    {
+      "id": "vmCString",
+      "type": "security",
+      "label": "__TEXT / __cstring",
+      "sublabel": "字符串字节 · r-x（本构建的映射权限）",
+      "tag": "不是 g_str 变量本身",
+      "pos": [720, 220],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 224,
+          "end_line": 226,
+          "label": "__cstring 分类规则"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 336,
+          "end_line": 337,
+          "label": "字面量地址样本"
+        }
+      ]
+    },
+    {
+      "id": "sourceInitialized",
+      "type": "backend",
+      "label": "g_data / g_str 变量",
+      "sublabel": "已初始化的全局对象",
+      "pos": [60, 340],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 34,
+          "end_line": 36,
+          "label": "全局对象定义"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 338,
+          "end_line": 341,
+          "label": "探测变量自身地址"
+        }
+      ]
+    },
+    {
+      "id": "vmData",
+      "type": "database",
+      "label": "__DATA / __data",
+      "sublabel": "已初始化全局 / 静态数据 · rw-",
+      "tag": "可读 + 可写",
+      "pos": [720, 340],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 227,
+          "end_line": 229,
+          "label": "__data 分类规则"
+        }
+      ]
+    },
+    {
+      "id": "sourceZero",
+      "type": "backend",
+      "label": "g_bss",
+      "sublabel": "零初始化的全局对象",
+      "pos": [60, 460],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 35,
+          "label": "零初始化全局对象"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 342,
+          "end_line": 343,
+          "label": "探测 g_bss 地址"
+        }
+      ]
+    },
+    {
+      "id": "vmBss",
+      "type": "database",
+      "label": "__DATA / __common",
+      "sublabel": "零初始化全局 / 静态数据 · rw-",
+      "tag": "启动时得到零值",
+      "pos": [720, 460],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 230,
+          "end_line": 232,
+          "label": "__bss / __common 分类"
+        }
+      ]
+    },
+    {
+      "id": "sourceDynamic",
+      "type": "backend",
+      "label": "malloc(sizeof(int))",
+      "sublabel": "显式申请动态存储",
+      "pos": [60, 580],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 318,
+          "end_line": 325,
+          "label": "申请动态存储"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 344,
+          "end_line": 346,
+          "label": "探测 malloc 指针"
+        }
+      ]
+    },
+    {
+      "id": "vmMalloc",
+      "type": "cloud",
+      "label": "malloc allocator 管理的区域",
+      "sublabel": "zone / tiny block · rw-",
+      "tag": "只有调用 malloc 才出现",
+      "pos": [720, 580],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 255,
+          "end_line": 263,
+          "label": "allocator 归属验证"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 240,
+          "end_line": 242,
+          "label": "动态存储分类"
+        }
+      ]
+    },
+    {
+      "id": "sourceAutomatic",
+      "type": "backend",
+      "label": "main::local / callee::local",
+      "sublabel": "函数块中的自动存储对象",
+      "pos": [60, 700],
+      "size": [280, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 315,
+          "label": "callee 局部变量"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 318,
+          "end_line": 319,
+          "label": "main 局部变量"
+        }
+      ]
+    },
+    {
+      "id": "vmStack",
+      "type": "database",
+      "label": "当前 pthread 线程栈",
+      "sublabel": "栈帧与局部对象 · rw- · 通常向低地址扩展",
+      "tag": "每个线程各自拥有",
+      "pos": [720, 700],
+      "size": [330, 80],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 165,
+          "end_line": 180,
+          "label": "查询当前线程栈范围"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 236,
+          "end_line": 238,
+          "label": "线程栈分类"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "C++ 源码里的对象与表达式",
+      "wraps": [
+        "sourceFunctions",
+        "sourceLiteral",
+        "sourceInitialized",
+        "sourceZero",
+        "sourceDynamic",
+        "sourceAutomatic"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "本进程的虚拟地址空间（示意，不是物理 RAM）",
+      "wraps": [
+        "vmText",
+        "vmCString",
+        "vmData",
+        "vmBss",
+        "vmMalloc",
+        "vmStack"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "mapFunctions",
+      "from": "sourceFunctions",
+      "to": "vmText",
+      "label": "编译 + 装载 → 指令地址",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mapLiteral",
+      "from": "sourceLiteral",
+      "to": "vmCString",
+      "label": "字面量的首地址",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mapInitialized",
+      "from": "sourceInitialized",
+      "to": "vmData",
+      "label": "对象地址",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mapZero",
+      "from": "sourceZero",
+      "to": "vmBss",
+      "label": "对象地址",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mapDynamic",
+      "from": "sourceDynamic",
+      "to": "vmMalloc",
+      "label": "allocator 返回指针",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "mapAutomatic",
+      "from": "sourceAutomatic",
+      "to": "vmStack",
+      "label": "本次调用的栈帧槽位",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "先把“内存”说准确",
+      "items": [
+        "图右侧是进程看到的虚拟地址空间，不是一排可以肉眼看到的物理内存条",
+        "每个有效地址都落在一个 [start, end) 区域中；区域带 r / w / x 权限和来源"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "C++ 保证 vs. 本机实现",
+      "items": [
+        "C++ 主要规定对象的存储期、生命周期和可观察行为",
+        "__TEXT、__DATA、pthread 栈、malloc zone、具体地址和栈方向是 macOS / ABI / 编译器的实现"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "不要把图读成固定地图",
+      "items": [
+        "ASLR 会让每次运行的十六进制地址变化；区域也不保证按图中顺序连续排列",
+        "可靠的读法是：取得地址 → 查所属范围与权限 → 再判断 Mach-O、线程栈或 allocator 归属"
+      ]
+    }
+  ]
+}

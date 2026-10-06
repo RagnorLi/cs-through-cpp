@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PushStack：一个地址如何被证明",
+    "locale": "zh-CN",
+    "output": "apps/cherno/005-functions-in-cpp/archify/memory-probe-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/RagnorLi/cpp.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bf6426784151523559d1868469bc3cde677ea5e0"
+    }
+  },
+  "components": [
+    {
+      "id": "samples",
+      "type": "backend",
+      "label": "main() + callee()",
+      "sublabel": "制造 9 个待验证的运行时地址",
+      "pos": [40, 280],
+      "size": [190, 78],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 354,
+          "label": "样本地址与调用入口"
+        }
+      ]
+    },
+    {
+      "id": "vmEvidence",
+      "type": "cloud",
+      "label": "Mach VM 映射证据",
+      "sublabel": "query_vm_region() · 范围 / rwx / tag",
+      "pos": [280, 70],
+      "size": [220, 82],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 67,
+          "end_line": 103,
+          "label": "查询真实虚拟内存映射"
+        }
+      ]
+    },
+    {
+      "id": "machEvidence",
+      "type": "external",
+      "label": "dyld + Mach-O 内容证据",
+      "sublabel": "query_main_image() · segment / section",
+      "pos": [590, 70],
+      "size": [230, 82],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 105,
+          "end_line": 163,
+          "label": "遍历 Segment 与 Section"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 63,
+          "end_line": 65,
+          "label": "读取固定长度名称"
+        }
+      ]
+    },
+    {
+      "id": "probe",
+      "type": "backend",
+      "label": "probe()",
+      "sublabel": "以 address 为主键采集并汇总证据",
+      "tag": "核心编排器",
+      "pos": [390, 280],
+      "size": [220, 90],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 247,
+          "end_line": 308,
+          "label": "统一探针实现"
+        }
+      ]
+    },
+    {
+      "id": "stackEvidence",
+      "type": "security",
+      "label": "pthread 栈证据",
+      "sublabel": "current_stack_range() · [low, high)",
+      "pos": [280, 500],
+      "size": [220, 82],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 165,
+          "end_line": 180,
+          "label": "当前线程栈与范围判断"
+        }
+      ]
+    },
+    {
+      "id": "mallocEvidence",
+      "type": "database",
+      "label": "malloc allocator 证据",
+      "sublabel": "zone 归属 + 实际分配块大小",
+      "pos": [590, 500],
+      "size": [230, 82],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 255,
+          "end_line": 263,
+          "label": "验证 malloc 指针"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 320,
+          "end_line": 346,
+          "label": "申请并提交 heap 地址"
+        }
+      ]
+    },
+    {
+      "id": "classifier",
+      "type": "backend",
+      "label": "conclusion()",
+      "sublabel": "证据组合 → 人类可读分类",
+      "pos": [750, 280],
+      "size": [200, 84],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 217,
+          "end_line": 245,
+          "label": "分类规则"
+        }
+      ]
+    },
+    {
+      "id": "terminal",
+      "type": "frontend",
+      "label": "终端证据报告",
+      "sublabel": "地址 · 区域 · 权限 · 来源 · 判定",
+      "pos": [1090, 280],
+      "size": [210, 84],
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 265,
+          "end_line": 307,
+          "label": "格式化输出"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "submit-addresses",
+      "from": "samples",
+      "to": "probe",
+      "label": "逐个提交 name + address",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-result",
+      "from": "vmEvidence",
+      "to": "probe",
+      "label": "VmRegion"
+    },
+    {
+      "id": "mach-result",
+      "from": "machEvidence",
+      "to": "probe",
+      "label": "MachLocation",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stack-result",
+      "from": "stackEvidence",
+      "to": "probe",
+      "label": "StackRange"
+    },
+    {
+      "id": "malloc-result",
+      "from": "mallocEvidence",
+      "to": "probe",
+      "label": "zone + size",
+      "variant": "dashed"
+    },
+    {
+      "id": "evidence-bundle",
+      "from": "probe",
+      "to": "classifier",
+      "label": "image + stack + malloc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "render-report",
+      "from": "classifier",
+      "to": "terminal",
+      "label": "原始证据 + 最终判定",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "两种互补的真相",
+      "items": [
+        "Mach VM 证明地址真实映射以及 r/w/x 权限",
+        "Mach-O 解释主程序映像中该地址原本代表什么"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "运行时才出现的内容",
+      "items": [
+        "局部变量用 pthread 给出的当前线程栈范围验证",
+        "heap 指针只在显式标记后交给 malloc allocator 验证"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "如何阅读箭头",
+      "items": [
+        "本图箭头表示证据流向，不表示精确调用时间",
+        "精确执行顺序请配合时序图阅读"
+      ]
+    }
+  ]
+}

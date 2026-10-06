@@ -1,0 +1,528 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "一次 /goal 从输入到自动续跑，再到完成",
+    "subtitle": "按公开源码中的真实调用顺序展开；虚线/返回线表示响应或次级路径",
+    "locale": "zh-CN",
+    "output": ".archify/openai-goal-implementation-20261006-145511/02-goal-sequence.html",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [2200, 1240],
+    "repository": {
+      "url": "https://github.com/openai/codex.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "822e58cc3d666166c7446c5b1ea2e52f5d09594c"
+    },
+    "views": [
+      {
+        "id": "persist",
+        "label": "① 用户命令落库",
+        "focus": ["user", "surface", "server", "rollout", "service", "db"],
+        "note": "验证、记录用户意图、写入状态、发送通知。"
+      },
+      {
+        "id": "resume",
+        "label": "② 空闲续跑",
+        "focus": ["server", "runtime", "db", "thread", "model"],
+        "note": "仅在 active 且线程真正空闲时启动自动回合。"
+      },
+      {
+        "id": "finish",
+        "label": "③ 工作与完成",
+        "focus": ["model", "tools", "db", "runtime", "surface"],
+        "note": "未完成则下一次 idle 继续；完成必须由受限工具显式落状态。"
+      }
+    ],
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "default": { "label": "同步调用" },
+        "emphasis": { "label": "主路径" },
+        "security": { "label": "用户意图 / 权限检查" },
+        "dashed": { "label": "通知或次级路径" },
+        "return": { "label": "返回值" }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "你",
+      "sublabel": "目标所有者",
+      "icon": "person"
+    },
+    {
+      "id": "surface",
+      "type": "frontend",
+      "label": "命令入口",
+      "sublabel": "Desktop 行为 / TUI 源码",
+      "sources": [
+        {
+          "path": "codex-rs/tui/src/chatwidget/slash_dispatch.rs",
+          "line": 965,
+          "end_line": 1069,
+          "label": "TUI /goal"
+        },
+        {
+          "path": "codex-rs/tui/src/app/thread_goal_actions.rs",
+          "line": 132,
+          "end_line": 288,
+          "label": "设置/暂停/恢复/清除"
+        }
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "App Server",
+      "sublabel": "ThreadGoalRequestProcessor",
+      "sources": [
+        {
+          "path": "codex-rs/app-server/src/request_processors/thread_goal_processor.rs",
+          "line": 133,
+          "end_line": 251,
+          "label": "set 主流程"
+        }
+      ]
+    },
+    {
+      "id": "rollout",
+      "type": "security",
+      "label": "Rollout",
+      "sublabel": "用户意图 + Goal 事件",
+      "sources": [
+        {
+          "path": "codex-rs/app-server/src/request_processors/thread_goal_user_context.rs",
+          "line": 1,
+          "end_line": 50,
+          "label": "用户变更记录"
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "GoalService",
+      "sublabel": "验证与并发保护",
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/api.rs",
+          "line": 147,
+          "end_line": 294,
+          "label": "set_thread_goal"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "goals_1.sqlite",
+      "sublabel": "thread_goals row",
+      "sources": [
+        {
+          "path": "codex-rs/state/goals_migrations/0001_thread_goals.sql",
+          "line": 1,
+          "end_line": 18,
+          "label": "表结构"
+        },
+        {
+          "path": "codex-rs/state/src/runtime/goals.rs",
+          "line": 271,
+          "end_line": 418,
+          "label": "受约束更新"
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "GoalRuntime",
+      "sublabel": "状态效果 + 自动续跑",
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/runtime.rs",
+          "line": 191,
+          "end_line": 255,
+          "label": "应用状态"
+        },
+        {
+          "path": "codex-rs/ext/goal/src/runtime.rs",
+          "line": 425,
+          "end_line": 523,
+          "label": "continue_if_idle"
+        }
+      ]
+    },
+    {
+      "id": "thread",
+      "type": "backend",
+      "label": "CodexThread",
+      "sublabel": "自动回合准入",
+      "sources": [
+        {
+          "path": "codex-rs/core/src/session/turn_input.rs",
+          "line": 427,
+          "end_line": 579,
+          "label": "start_if_idle"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "type": "external",
+      "label": "Agent / 模型",
+      "sublabel": "读取内部 Goal 上下文"
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "Goal Tools",
+      "sublabel": "受限状态操作",
+      "sources": [
+        {
+          "path": "codex-rs/ext/goal/src/spec.rs",
+          "line": 9,
+          "end_line": 94,
+          "label": "工具权限"
+        },
+        {
+          "path": "codex-rs/ext/goal/src/tool.rs",
+          "line": 183,
+          "end_line": 314,
+          "label": "工具实现"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 625,
+      "label": "A · 显式用户命令：先证明是谁改的，再持久化"
+    },
+    {
+      "from": 630,
+      "to": 860,
+      "label": "B · 事件驱动续跑：仅在 active + idle 时提交自动回合"
+    },
+    {
+      "from": 865,
+      "to": 1175,
+      "label": "C · Agent 工作：未完成继续；完成要审计并显式更新状态"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m01",
+      "from": "user",
+      "to": "surface",
+      "y": 170,
+      "label": "/goal <objective>",
+      "variant": "emphasis",
+      "note": "bare /goal 是查询；带文本才是设置"
+    },
+    {
+      "id": "m02",
+      "from": "surface",
+      "to": "server",
+      "y": 205,
+      "label": "thread/goal/set {objective, origin:user}",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m03",
+      "from": "server",
+      "to": "server",
+      "y": 240,
+      "label": "检查 feature、thread 持久性、模型策略；锁住 resume",
+      "variant": "security"
+    },
+    {
+      "id": "m04",
+      "from": "server",
+      "to": "service",
+      "y": 275,
+      "label": "set_thread_goal(request, record_user_instruction)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m05",
+      "from": "service",
+      "to": "runtime",
+      "y": 310,
+      "label": "取得 goal_state_permit；先结算正在进行的 Goal",
+      "variant": "security"
+    },
+    {
+      "id": "m06",
+      "from": "service",
+      "to": "rollout",
+      "y": 345,
+      "label": "record_user_goal_update（在 DB 写入前）",
+      "variant": "security"
+    },
+    {
+      "id": "m07",
+      "from": "rollout",
+      "to": "service",
+      "y": 378,
+      "label": "用户意图已记录",
+      "variant": "return"
+    },
+    {
+      "id": "m08",
+      "from": "service",
+      "to": "db",
+      "y": 410,
+      "label": "SELECT existing goal"
+    },
+    {
+      "id": "m09",
+      "from": "db",
+      "to": "service",
+      "y": 442,
+      "label": "旧 row 或 none",
+      "variant": "return"
+    },
+    {
+      "id": "m10",
+      "from": "service",
+      "to": "db",
+      "y": 474,
+      "label": "UPDATE（带 expected_goal_id）或 REPLACE 新 row",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m11",
+      "from": "db",
+      "to": "service",
+      "y": 506,
+      "label": "持久化后的 ThreadGoal",
+      "variant": "return"
+    },
+    {
+      "id": "m12",
+      "from": "service",
+      "to": "server",
+      "y": 538,
+      "label": "GoalSetOutcome",
+      "variant": "return"
+    },
+    {
+      "id": "m13",
+      "from": "server",
+      "to": "rollout",
+      "y": 570,
+      "label": "append ThreadGoalUpdated item",
+      "variant": "dashed"
+    },
+    {
+      "id": "m14",
+      "from": "server",
+      "to": "surface",
+      "y": 602,
+      "label": "RPC response + thread/goal/updated",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "server",
+      "to": "runtime",
+      "y": 650,
+      "label": "GoalSetOutcome.apply_runtime_effects()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m16",
+      "from": "runtime",
+      "to": "db",
+      "y": 684,
+      "label": "检查 continuation deferral；读取当前 Goal"
+    },
+    {
+      "id": "m17",
+      "from": "db",
+      "to": "runtime",
+      "y": 716,
+      "label": "status == active",
+      "variant": "return"
+    },
+    {
+      "id": "m18",
+      "from": "runtime",
+      "to": "runtime",
+      "y": 748,
+      "label": "用 continuation.md 渲染 InternalModelContext",
+      "note": "包含 objective、tokens、预算、完成/阻塞审计规则"
+    },
+    {
+      "id": "m19",
+      "from": "runtime",
+      "to": "thread",
+      "y": 780,
+      "label": "start_turn_if_idle(trigger=goal)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m20",
+      "from": "thread",
+      "to": "thread",
+      "y": 812,
+      "label": "拒绝条件：待处理用户输入 / Plan / draining / 非 idle",
+      "variant": "security"
+    },
+    {
+      "id": "m21",
+      "from": "thread",
+      "to": "model",
+      "y": 844,
+      "label": "启动 RegularTask；把 Goal 上下文送入本轮",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m22",
+      "from": "model",
+      "to": "tools",
+      "y": 885,
+      "label": "get_goal()；并使用正常工具完成真实工作"
+    },
+    {
+      "id": "m23",
+      "from": "tools",
+      "to": "db",
+      "y": 918,
+      "label": "读取持久 Goal；工具结果进入 accounting"
+    },
+    {
+      "id": "m24",
+      "from": "model",
+      "to": "thread",
+      "y": 951,
+      "label": "本轮输出（不等于 Goal 自动完成）",
+      "variant": "return"
+    },
+    {
+      "id": "m25",
+      "from": "thread",
+      "to": "runtime",
+      "y": 984,
+      "label": "on_turn_stop：故障/空响应审计 + 结算；随后 thread idle",
+      "variant": "dashed"
+    },
+    {
+      "id": "m26",
+      "from": "runtime",
+      "to": "db",
+      "y": 1017,
+      "label": "累计 tokens/time；必要时转 budget_limited 或 blocked"
+    },
+    {
+      "id": "m27",
+      "from": "runtime",
+      "to": "thread",
+      "y": 1050,
+      "label": "仍为 active → 下一次 continue_if_idle",
+      "variant": "emphasis",
+      "note": "这就是跨多个 turn 的 Goal 循环"
+    },
+    {
+      "id": "m28",
+      "from": "model",
+      "to": "tools",
+      "y": 1083,
+      "label": "证据审计通过后：update_goal(status=complete)",
+      "variant": "security"
+    },
+    {
+      "id": "m29",
+      "from": "tools",
+      "to": "db",
+      "y": 1116,
+      "label": "UPDATE status=complete；保留最终使用量",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m30",
+      "from": "runtime",
+      "to": "surface",
+      "y": 1149,
+      "label": "ThreadGoalUpdated → UI 显示完成",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "server",
+      "from": 200,
+      "to": 612,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 270,
+      "to": 545,
+      "type": "backend"
+    },
+    {
+      "participant": "runtime",
+      "from": 645,
+      "to": 1060,
+      "type": "backend"
+    },
+    {
+      "participant": "thread",
+      "from": 775,
+      "to": 1060,
+      "type": "backend"
+    },
+    {
+      "participant": "model",
+      "from": 840,
+      "to": 1090,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "关键顺序不可颠倒",
+      "items": [
+        "GoalService 持有 mutation permit，避免改状态时另一个 idle continuation 抢跑",
+        "显式用户意图在数据库写入前进入 rollout；失败则 Goal 状态不变",
+        "数据库成功后才响应、通知，并应用运行时效果"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "为什么不会抢你的话",
+      "items": [
+        "自动回合提交前、保留 turn 后都会检查待处理的用户触发输入",
+        "已有 active turn 时返回 NotIdle；Plan 模式返回 PlanMode",
+        "因此 Goal 是 idle 事件驱动，不是无条件后台循环"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "模型的权力不是无限的",
+      "items": [
+        "create_goal 只允许在用户明确要求时调用，且不能覆盖未结束 Goal",
+        "update_goal 只暴露 complete / blocked / paused",
+        "resume、budget_limited、usage_limited 由用户或系统控制"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "完成到底意味着什么",
+      "items": [
+        "普通 assistant 最终文本不会自动把 Goal 标为 complete",
+        "只有目标确实达成、逐项审计无遗漏后，模型才应调用 update_goal(complete)",
+        "若仍 active，线程再次 idle 时会进入下一轮自动 continuation"
+      ]
+    }
+  ]
+}

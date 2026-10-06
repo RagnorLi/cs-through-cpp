@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "PushStack：从 main 调用到 callee 返回",
+    "locale": "zh-CN",
+    "output": "apps/cherno/005-functions-in-cpp/archify/function-call-sequence.html",
+    "viewBox": [1090, 703],
+    "column_fit": "fixed",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/RagnorLi/cpp.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "bf6426784151523559d1868469bc3cde677ea5e0"
+    }
+  },
+  "participants": [
+    {
+      "id": "main",
+      "type": "backend",
+      "label": "main()",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 318,
+          "end_line": 354,
+          "label": "主执行流"
+        }
+      ]
+    },
+    {
+      "id": "callee",
+      "type": "backend",
+      "label": "callee()",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 310,
+          "end_line": 316,
+          "label": "被调用函数"
+        }
+      ]
+    },
+    {
+      "id": "probe",
+      "type": "backend",
+      "label": "probe()",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 247,
+          "end_line": 308,
+          "label": "探针编排"
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "cloud",
+      "label": "运行时 API",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 67,
+          "end_line": 103,
+          "label": "VM 查询"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 165,
+          "end_line": 180,
+          "label": "线程栈查询"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 255,
+          "end_line": 263,
+          "label": "allocator 查询"
+        }
+      ]
+    },
+    {
+      "id": "macho",
+      "type": "external",
+      "label": "dyld / Mach-O",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 105,
+          "end_line": 163,
+          "label": "主映像查询"
+        }
+      ]
+    },
+    {
+      "id": "report",
+      "type": "frontend",
+      "label": "结论 / 输出",
+      "sources": [
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 217,
+          "end_line": 245,
+          "label": "结论规则"
+        },
+        {
+          "path": "apps/cherno/005-functions-in-cpp/PushStack.cpp",
+          "line": 265,
+          "end_line": 307,
+          "label": "输出证据与判定"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 185,
+      "label": "建立运行时样本"
+    },
+    {
+      "from": 190,
+      "to": 350,
+      "label": "完整展开一次 probe(&callee)"
+    },
+    {
+      "from": 360,
+      "to": 390,
+      "label": "同一流水线处理其余地址"
+    },
+    {
+      "from": 400,
+      "to": 605,
+      "label": "进入 callee、观察返回地址并回到 main"
+    }
+  ],
+  "messages": [
+    {
+      "id": "prepare-runtime",
+      "from": "main",
+      "to": "runtime",
+      "y": 160,
+      "label": "malloc(int) + 查询初始栈范围",
+      "variant": "emphasis",
+      "note": "运行时 API 返回 heap 指针与当前线程的 [low, high)"
+    },
+    {
+      "id": "probe-callee-entry",
+      "from": "main",
+      "to": "probe",
+      "y": 195,
+      "label": "probe(\"callee 函数入口\", &callee)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "query-runtime-evidence",
+      "from": "probe",
+      "to": "runtime",
+      "y": 225,
+      "label": "查询 VM 映射 + 当前线程栈"
+    },
+    {
+      "id": "return-runtime-evidence",
+      "from": "runtime",
+      "to": "probe",
+      "y": 253,
+      "label": "VmRegion + StackRange",
+      "variant": "return"
+    },
+    {
+      "id": "query-image",
+      "from": "probe",
+      "to": "macho",
+      "y": 281,
+      "label": "query_main_image(address)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "return-image",
+      "from": "macho",
+      "to": "probe",
+      "y": 309,
+      "label": "MachLocation: __TEXT / __text",
+      "variant": "return"
+    },
+    {
+      "id": "print-first-report",
+      "from": "probe",
+      "to": "report",
+      "y": 337,
+      "label": "conclusion() + 打印完整证据",
+      "variant": "emphasis"
+    },
+    {
+      "id": "remaining-main-probes",
+      "from": "main",
+      "to": "probe",
+      "y": 373,
+      "label": "依次调用其余 6 次 probe(...) ",
+      "variant": "emphasis",
+      "note": "g_str、&g_str、&g_data、&g_bss、heap、&main::local 复用同一流水线；仅 heap 额外查询 malloc zone 与块大小"
+    },
+    {
+      "id": "call-callee",
+      "from": "main",
+      "to": "callee",
+      "y": 409,
+      "label": "callee()：控制流跳入",
+      "variant": "emphasis"
+    },
+    {
+      "id": "probe-return-address",
+      "from": "callee",
+      "to": "probe",
+      "y": 445,
+      "label": "取得 __builtin_return_address(0) 后 probe(...) ",
+      "variant": "emphasis",
+      "note": "这是 callee 完成后 main 继续执行的位置，不是 C++ 返回值"
+    },
+    {
+      "id": "print-return-address",
+      "from": "probe",
+      "to": "report",
+      "y": 473,
+      "label": "同一流水线 → __TEXT / __text"
+    },
+    {
+      "id": "probe-callee-local",
+      "from": "callee",
+      "to": "probe",
+      "y": 505,
+      "label": "probe(&callee::local)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "print-callee-local",
+      "from": "probe",
+      "to": "report",
+      "y": 533,
+      "label": "同一流水线 → 当前线程栈"
+    },
+    {
+      "id": "return-main",
+      "from": "callee",
+      "to": "main",
+      "y": 565,
+      "label": "ret：回到保存的返回地址",
+      "variant": "return"
+    },
+    {
+      "id": "free-int",
+      "from": "main",
+      "to": "runtime",
+      "y": 597,
+      "label": "free(heap)",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "main",
+      "from": 156,
+      "to": 601,
+      "type": "backend"
+    },
+    {
+      "participant": "callee",
+      "from": 405,
+      "to": 569,
+      "type": "backend"
+    },
+    {
+      "participant": "probe",
+      "from": 191,
+      "to": 341,
+      "type": "backend"
+    },
+    {
+      "participant": "probe",
+      "from": 369,
+      "to": 377,
+      "type": "backend"
+    },
+    {
+      "participant": "probe",
+      "from": 441,
+      "to": 537,
+      "type": "backend"
+    },
+    {
+      "participant": "runtime",
+      "from": 156,
+      "to": 164,
+      "type": "cloud"
+    },
+    {
+      "participant": "runtime",
+      "from": 221,
+      "to": 257,
+      "type": "cloud"
+    },
+    {
+      "participant": "macho",
+      "from": 277,
+      "to": 313,
+      "type": "external"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "一份 probe 的固定流水线",
+      "items": [
+        "每个地址都会查询 VM、主 Mach-O 映像和当前线程栈",
+        "只有标记为 malloc 返回值的地址才查询 allocator"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "为什么只展开一次",
+      "items": [
+        "main 中 7 次、callee 中 2 次 probe 都走同一实现",
+        "图中完整展开 &callee，其余调用保留输入和特殊分支"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "函数调用闭环",
+      "items": [
+        "callee 入口和返回目标都落在 __TEXT / __text",
+        "callee::local 落在当前线程栈；heap 不是函数调用的必需部分"
+      ]
+    }
+  ]
+}
